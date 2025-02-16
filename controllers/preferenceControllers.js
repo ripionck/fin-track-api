@@ -2,14 +2,21 @@ const Preference = require('../models/Preference');
 
 const getPreference = async (req, res) => {
   try {
-    const preference = await Preference.findOne({ userId: req.user });
+    let preference = await Preference.findOne({ userId: req.user });
+
     if (!preference) {
-      // It's often better to send an empty object or a default preference
-      // instead of a 404 if you want the client to have some initial values.
-      return res.json({}); // Or: res.json({ theme: 'light', dateFormat: 'YYYY-MM-DD', ... });
-      // If you truly want to indicate no preference, keep the 404:
-      // return res.status(404).json({ message: 'Preference not found' });
+      // Create default preferences if none exist
+      preference = new Preference({
+        userId: req.user,
+        theme: 'light',
+        dateFormat: 'MM/DD/YYYY',
+        compactView: false,
+        language: 'en',
+        startOfWeek: 'sunday',
+      });
+      await preference.save();
     }
+
     res.json(preference);
   } catch (error) {
     console.error(error);
@@ -21,19 +28,25 @@ const updatePreference = async (req, res) => {
   try {
     const { theme, dateFormat, compactView, language, startOfWeek } = req.body;
 
-    if (!theme || !dateFormat || !language) {
-      return res
-        .status(400)
-        .json({
-          message: 'Theme, Date Format and Language are required fields',
-        });
-    }
+    // No need to require all fields - update only what's provided
+    const updates = {};
+    if (theme) updates.theme = theme;
+    if (dateFormat) updates.dateFormat = dateFormat;
+    if (compactView !== undefined) updates.compactView = compactView;
+    correctly;
+    if (language) updates.language = language;
+    if (startOfWeek) updates.startOfWeek = startOfWeek;
 
     const updatedPreference = await Preference.findOneAndUpdate(
       { userId: req.user },
-      { theme, dateFormat, compactView, language, startOfWeek },
-      { new: true, upsert: true, runValidators: true },
+      { $set: updates },
+      { new: true, runValidators: true },
     );
+
+    if (!updatedPreference) {
+      return res.status(404).json({ message: 'Preference not found' });
+    }
+
     res.json(updatedPreference);
   } catch (error) {
     console.error(error);

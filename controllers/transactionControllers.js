@@ -1,74 +1,46 @@
-const Transaction = require('../models/Transaction');
+const Notification = require('../models/Notification');
 
-const getAllTransactions = async (req, res) => {
+const getNotifications = async (req, res) => {
   try {
-    const transactions = await Transaction.find({ userId: req.user }).populate(
-      'categoryId',
-    );
-    res.json(transactions);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-const createTransaction = async (req, res) => {
-  try {
-    const { date, description, amount, categoryId, type } = req.body;
-    const newTransaction = new Transaction({
-      userId: req.user,
-      date,
-      description,
-      amount,
-      categoryId,
-      type,
+    const notifications = await Notification.find({ userId: req.user }).sort({
+      createdAt: -1,
     });
-    await newTransaction.save();
-    res.status(201).json(newTransaction);
+    res.json(notifications);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-const updateTransaction = async (req, res) => {
+const markAsRead = async (req, res) => {
   try {
-    const { date, description, amount, categoryId, type } = req.body;
-    const transaction = await Transaction.findByIdAndUpdate(
-      req.params.id,
-      { date, description, amount, categoryId, type },
+    const notificationId = req.params.id;
+    const notification = await Notification.findByIdAndUpdate(
+      notificationId,
+      { isRead: true },
       { new: true },
     );
-
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
     }
-
-    res.json(transaction);
+    res.json(notification);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-const deleteTransaction = async (req, res) => {
+const createNotification = async (userId, type, message) => {
   try {
-    const transaction = await Transaction.findByIdAndDelete(req.params.id);
-
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
-    }
-
-    res.status(204).json();
+    const newNotification = new Notification({
+      userId,
+      type,
+      message,
+    });
+    await newNotification.save();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error creating notification:', error);
   }
 };
 
-module.exports = {
-  getAllTransactions,
-  createTransaction,
-  updateTransaction,
-  deleteTransaction,
-};
+module.exports = { getNotifications, markAsRead, createNotification };
