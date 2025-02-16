@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const transactionController = require('../controllers/transactionControllers');
+const budgetController = require('../controllers/budgetControllers');
 const authMiddleware = require('../middleware/authMiddleware');
 
-router.get('/', authMiddleware, transactionController.getAllTransactions);
-router.post('/', authMiddleware, transactionController.createTransaction);
-router.put('/:id', authMiddleware, transactionController.updateTransaction);
-router.delete('/:id', authMiddleware, transactionController.deleteTransaction);
+router.get('/', authMiddleware, budgetController.getAllBudgets);
+router.post('/', authMiddleware, budgetController.createBudget);
+router.put('/:id', authMiddleware, budgetController.updateBudget);
+router.delete('/:id', authMiddleware, budgetController.deleteBudget);
 
 module.exports = router;

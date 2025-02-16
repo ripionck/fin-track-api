@@ -1,62 +1,76 @@
-const Transaction = require('../models/Transaction');
+const Budget = require('../models/Budget');
 
-const getAllTransactions = async (req, res) => {
+const getAllBudgets = async (req, res) => {
   try {
-    const transactions = await Transaction.find({ userId: req.user }).populate(
+    const budgets = await Budget.find({ userId: req.user }).populate(
       'categoryId',
     );
-    res.json(transactions);
+    res.json(budgets);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-const createTransaction = async (req, res) => {
+const createBudget = async (req, res) => {
   try {
-    const { date, description, amount, categoryId, type } = req.body;
-    const newTransaction = new Transaction({
+    const { categoryId, amountLimit, startDate, endDate } = req.body;
+
+    if (!amountLimit) {
+      return res.status(400).json({ message: 'Amount limit is required' });
+    }
+    if (!startDate) {
+      return res.status(400).json({ message: 'Start date is required' });
+    }
+    if (!endDate) {
+      return res.status(400).json({ message: 'End date is required' });
+    }
+    if (!categoryId) {
+      return res.status(400).json({ message: 'Category is required' });
+    }
+
+    const newBudget = new Budget({
       userId: req.user,
-      date,
-      description,
-      amount,
       categoryId,
-      type,
+      amountLimit,
+      startDate,
+      endDate,
     });
-    await newTransaction.save();
-    res.status(201).json(newTransaction);
+
+    await newBudget.save();
+    res.status(201).json(newBudget);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-const updateTransaction = async (req, res) => {
+const updateBudget = async (req, res) => {
   try {
-    const { date, description, amount, categoryId, type } = req.body;
-    const transaction = await Transaction.findByIdAndUpdate(
+    const { categoryId, amountLimit, startDate, endDate } = req.body;
+    const budget = await Budget.findByIdAndUpdate(
       req.params.id,
-      { date, description, amount, categoryId, type },
+      { categoryId, amountLimit, startDate, endDate },
       { new: true },
     );
 
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
+    if (!budget) {
+      return res.status(404).json({ message: 'Budget not found' });
     }
 
-    res.json(transaction);
+    res.json(budget);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-const deleteTransaction = async (req, res) => {
+const deleteBudget = async (req, res) => {
   try {
-    const transaction = await Transaction.findByIdAndDelete(req.params.id);
+    const budget = await Budget.findByIdAndDelete(req.params.id);
 
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
+    if (!budget) {
+      return res.status(404).json({ message: 'Budget not found' });
     }
 
     res.status(204).json();
@@ -67,8 +81,8 @@ const deleteTransaction = async (req, res) => {
 };
 
 module.exports = {
-  getAllTransactions,
-  createTransaction,
-  updateTransaction,
-  deleteTransaction,
+  getAllBudgets,
+  createBudget,
+  updateBudget,
+  deleteBudget,
 };

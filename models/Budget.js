@@ -7,7 +7,7 @@ const budgetSchema = new mongoose.Schema({
     ref: 'Category',
     required: true,
   },
-  limit: { type: Number, required: true },
+  amountLimit: { type: Number, required: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
 });
