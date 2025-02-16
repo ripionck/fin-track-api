@@ -25,7 +25,7 @@ const updateUserProfile = async (req, res) => {
       profileImage,
       currency,
     } = req.body;
-    const updates = {}; // Object to hold the fields to update
+    const updates = {};
 
     if (firstName) updates.firstName = firstName;
     if (lastName) updates.lastName = lastName;
@@ -39,11 +39,10 @@ const updateUserProfile = async (req, res) => {
       updates.password = hashedPassword;
     }
 
-    // Find and update the user, ensuring it's the logged-in user
     const updatedUser = await User.findByIdAndUpdate(
-      req.user, // The user ID from the auth middleware
-      { $set: updates }, // Use $set to update specific fields
-      { new: true, runValidators: true }, // Return the updated document and validate updates
+      req.user,
+      { $set: updates },
+      { new: true, runValidators: true },
     ).select('-password');
 
     if (!updatedUser) {
