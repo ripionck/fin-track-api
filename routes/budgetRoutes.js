@@ -3,8 +3,8 @@ const router = express.Router();
 const budgetController = require('../controllers/budgetControllers');
 const authMiddleware = require('../middleware/authMiddleware');
 
-router.get('/', authMiddleware, budgetController.getAllBudgets);
-router.post('/', authMiddleware, budgetController.createBudget);
+router.get('', authMiddleware, budgetController.getAllBudgets);
+router.post('', authMiddleware, budgetController.createBudget);
 router.put('/:id', authMiddleware, budgetController.updateBudget);
 router.delete('/:id', authMiddleware, budgetController.deleteBudget);
 

@@ -24,12 +24,12 @@ app.use(helmet());
 app.use(cors());
 app.use(morgan('combined'));
 
-// Test route
-app.get('/api/test', (req, res) => {
+/// Test route
+app.get('/api/', (req, res) => {
   res.status(200).json({ message: 'API is working!' });
 });
 
-// routes
+// Routes
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -38,7 +38,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
-// Error handling middleware (important to keep)
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Something went wrong!' });
