@@ -25,10 +25,19 @@ const registerUser = async (req, res) => {
     });
     await newUser.save();
 
-    // Generate JWT token
+    // Generate access token
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN || '1h',
     });
+
+    // Generate refresh token
+    const refreshToken = jwt.sign(
+      { userId: newUser._id },
+      process.env.REFRESH_TOKEN_SECRET,
+      {
+        expiresIn: '7d',
+      },
+    );
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -39,6 +48,7 @@ const registerUser = async (req, res) => {
         email: newUser.email,
       },
       token,
+      refreshToken,
     });
   } catch (error) {
     console.error('Error in registerUser:', error);
@@ -62,7 +72,7 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Generate JWT token
+    // Generate access token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN || '1h',
     });
