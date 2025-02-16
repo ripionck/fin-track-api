@@ -30,12 +30,10 @@ const createTransaction = async (req, res) => {
       'transactionCreated',
       `New transaction: ${newTransaction.description} (${newTransaction.amount})`,
     );
-    res
-      .status(201)
-      .json({
-        message: 'Transaction created successfully',
-        transaction: newTransaction,
-      });
+    res.status(201).json({
+      message: 'Transaction created successfully',
+      transaction: newTransaction,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error', error: error.message });
