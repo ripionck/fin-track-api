@@ -1,4 +1,5 @@
 const Budget = require('../models/Budget');
+const { createNotification } = require('./notificationControllers');
 
 const getAllBudgets = async (req, res) => {
   try {
@@ -38,6 +39,11 @@ const createBudget = async (req, res) => {
     });
 
     await newBudget.save();
+    createNotification(
+      req.user,
+      'budgetCreated',
+      'A new budget has been created.',
+    );
     res.status(201).json(newBudget);
   } catch (error) {
     console.error(error);

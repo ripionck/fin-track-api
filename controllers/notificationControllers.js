@@ -14,18 +14,15 @@ const getNotifications = async (req, res) => {
 
 const markAsRead = async (req, res) => {
   try {
-    const { notificationId } = req.params;
-
+    const notificationId = req.params.id;
     const notification = await Notification.findByIdAndUpdate(
       notificationId,
       { isRead: true },
       { new: true },
     );
-
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' });
     }
-
     res.json(notification);
   } catch (error) {
     console.error(error);
@@ -33,45 +30,17 @@ const markAsRead = async (req, res) => {
   }
 };
 
-const deleteNotification = async (req, res) => {
+const createNotification = async (userId, type, message) => {
   try {
-    const { notificationId } = req.params;
-
-    const notification = await Notification.findByIdAndDelete(notificationId);
-
-    if (!notification) {
-      return res.status(404).json({ message: 'Notification not found' });
-    }
-
-    res.status(204).json();
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-const createNotification = async (req, res) => {
-  try {
-    const { message, type, relatedObjectId } = req.body;
-
     const newNotification = new Notification({
-      userId: req.user,
-      message,
+      userId,
       type,
-      relatedObjectId,
+      message,
     });
-
-    const savedNotification = await newNotification.save();
-    res.status(201).json(savedNotification);
+    await newNotification.save();
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error creating notification:', error);
   }
 };
 
-module.exports = {
-  getNotifications,
-  markAsRead,
-  deleteNotification,
-  createNotification,
-};
+module.exports = { getNotifications, markAsRead, createNotification };
