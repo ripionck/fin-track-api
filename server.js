@@ -33,15 +33,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong!' });
 });
 
+mongoose.set('strictQuery', false);
 mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('connected to MongoDB');
   })
-  .then(() => console.log('MongoDB Connected'))
-  .catch((err) => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
+  .catch((error) => {
+    console.error('MongoDB connection error:', error.message);
   });
 
 const PORT = process.env.PORT || 5000;
@@ -51,17 +50,6 @@ const server = app.listen(PORT, () =>
 
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
-    mongoose.connection.close(false, () => {
-      console.log('MongoDB connection closed');
-      process.exit(0);
-    });
-  });
-});
-
-process.on('SIGINT', () => {
-  console.log('SIGINT signal received: closing HTTP server');
   server.close(() => {
     console.log('HTTP server closed');
     mongoose.connection.close(false, () => {

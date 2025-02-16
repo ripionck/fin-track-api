@@ -1,4 +1,6 @@
 const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+dotenv.config();
 
 const authMiddleware = (req, res, next) => {
   const token = req.header('Authorization')?.split(' ')[1];
@@ -8,7 +10,7 @@ const authMiddleware = (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, 'your_secret_key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded.userId;
     next();
   } catch (err) {
