@@ -1,50 +1,90 @@
 const Category = require('../models/Category');
 
-exports.getCategories = async (req, res) => {
+const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find({ user: req.user.id });
+    const categories = await Category.find();
     res.json(categories);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.createCategory = async (req, res) => {
+const createCategory = async (req, res) => {
   try {
-    const category = await Category.create({ ...req.body, user: req.user.id });
-    res.status(201).json(category);
+    const { name, icon, color } = req.body;
+
+    // Check if a category with the same name already exists (important)
+    const existingCategory = await Category.findOne({ name });
+    if (existingCategory) {
+      return res
+        .status(400)
+        .json({ message: 'Category with this name already exists' });
+    }
+
+    const newCategory = new Category({
+      name,
+      icon,
+      color,
+    });
+    await newCategory.save();
+    res.status(201).json(newCategory);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.updateCategory = async (req, res) => {
+const updateCategory = async (req, res) => {
   try {
-    const category = await Category.findOneAndUpdate(
-      { _id: req.params.id, user: req.user.id },
-      req.body,
-      { new: true },
+    const { name, icon, color } = req.body;
+
+    // Check if a category with the same name already exists (important) - when updating
+    const existingCategory = await Category.findOne({
+      name,
+      _id: { $ne: req.params.id },
+    });
+    if (existingCategory) {
+      return res
+        .status(400)
+        .json({ message: 'Category with this name already exists' });
+    }
+
+    const category = await Category.findByIdAndUpdate(
+      req.params.id,
+      { name, icon, color },
+      { new: true, runValidators: true },
     );
+
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
     }
+
     res.json(category);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-exports.deleteCategory = async (req, res) => {
+const deleteCategory = async (req, res) => {
   try {
-    const category = await Category.findOneAndDelete({
-      _id: req.params.id,
-      user: req.user.id,
-    });
+    const category = await Category.findByIdAndDelete(req.params.id);
+
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
     }
-    res.json({ message: 'Category deleted' });
+
+    res.status(204).json();
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
+};
+
+module.exports = {
+  getAllCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
 };
