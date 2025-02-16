@@ -14,7 +14,6 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Email already exists' });
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create a new user
@@ -68,6 +67,15 @@ const loginUser = async (req, res) => {
       expiresIn: process.env.JWT_EXPIRES_IN || '1h',
     });
 
+    // Generate refresh token
+    const refreshToken = jwt.sign(
+      { userId: user._id },
+      process.env.REFRESH_TOKEN_SECRET,
+      {
+        expiresIn: '7d',
+      },
+    );
+
     res.json({
       message: 'Login successful',
       user: {
@@ -77,6 +85,7 @@ const loginUser = async (req, res) => {
         email: user.email,
       },
       token,
+      refreshToken,
     });
   } catch (error) {
     console.error('Error in loginUser:', error);
