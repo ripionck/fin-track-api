@@ -6,10 +6,10 @@ const getAllTransactions = async (req, res) => {
     const transactions = await Transaction.find({ userId: req.user }).populate(
       'categoryId',
     );
-    res.json(transactions);
+    res.json({ message: 'Transactions retrieved successfully', transactions });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -30,10 +30,15 @@ const createTransaction = async (req, res) => {
       'transactionCreated',
       `New transaction: ${newTransaction.description} (${newTransaction.amount})`,
     );
-    res.status(201).json(newTransaction);
+    res
+      .status(201)
+      .json({
+        message: 'Transaction created successfully',
+        transaction: newTransaction,
+      });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -50,10 +55,10 @@ const updateTransaction = async (req, res) => {
       return res.status(404).json({ message: 'Transaction not found' });
     }
 
-    res.json(transaction);
+    res.json({ message: 'Transaction updated successfully', transaction });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -65,10 +70,10 @@ const deleteTransaction = async (req, res) => {
       return res.status(404).json({ message: 'Transaction not found' });
     }
 
-    res.status(204).json();
+    res.status(204).json({ message: 'Transaction deleted successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 

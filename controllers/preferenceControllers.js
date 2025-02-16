@@ -15,12 +15,15 @@ const getPreference = async (req, res) => {
         startOfWeek: 'sunday',
       });
       await preference.save();
+      res
+        .status(201)
+        .json({ message: 'Default preferences created', preference });
+    } else {
+      res.json({ message: 'Preferences retrieved successfully', preference });
     }
-
-    res.json(preference);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -33,7 +36,6 @@ const updatePreference = async (req, res) => {
     if (theme) updates.theme = theme;
     if (dateFormat) updates.dateFormat = dateFormat;
     if (compactView !== undefined) updates.compactView = compactView;
-    correctly;
     if (language) updates.language = language;
     if (startOfWeek) updates.startOfWeek = startOfWeek;
 
@@ -47,10 +49,13 @@ const updatePreference = async (req, res) => {
       return res.status(404).json({ message: 'Preference not found' });
     }
 
-    res.json(updatedPreference);
+    res.json({
+      message: 'Preferences updated successfully',
+      updatedPreference,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 

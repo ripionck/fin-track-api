@@ -6,10 +6,10 @@ const getAllBudgets = async (req, res) => {
     const budgets = await Budget.find({ userId: req.user }).populate(
       'categoryId',
     );
-    res.json(budgets);
+    res.json({ message: 'Budgets retrieved successfully', budgets });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -44,10 +44,12 @@ const createBudget = async (req, res) => {
       'budgetCreated',
       'A new budget has been created.',
     );
-    res.status(201).json(newBudget);
+    res
+      .status(201)
+      .json({ message: 'Budget created successfully', budget: newBudget });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -64,10 +66,10 @@ const updateBudget = async (req, res) => {
       return res.status(404).json({ message: 'Budget not found' });
     }
 
-    res.json(budget);
+    res.json({ message: 'Budget updated successfully', budget });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -79,10 +81,10 @@ const deleteBudget = async (req, res) => {
       return res.status(404).json({ message: 'Budget not found' });
     }
 
-    res.status(204).json();
+    res.status(204).json({ message: 'Budget deleted successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 

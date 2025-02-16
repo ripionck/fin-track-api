@@ -5,10 +5,13 @@ const getNotifications = async (req, res) => {
     const notifications = await Notification.find({ userId: req.user }).sort({
       createdAt: -1,
     });
-    res.json(notifications);
+    res.json({
+      message: 'Notifications retrieved successfully',
+      notifications,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -23,10 +26,10 @@ const markAsRead = async (req, res) => {
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' });
     }
-    res.json(notification);
+    res.json({ message: 'Notification marked as read', notification });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
@@ -38,6 +41,7 @@ const createNotification = async (userId, type, message) => {
       message,
     });
     await newNotification.save();
+    console.log('Notification created successfully');
   } catch (error) {
     console.error('Error creating notification:', error);
   }
