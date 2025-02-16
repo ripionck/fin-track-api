@@ -19,9 +19,27 @@ const authRoutes = require('./routes/authRoutes');
 const app = express();
 
 // Middleware
+
+const allowedOrigins = [
+  'http://localhost:5173',
+
+  // 'https://your-production-frontend.com',
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+  }),
+);
+
 app.use(express.json());
 app.use(helmet());
-app.use(cors());
 app.use(morgan('combined'));
 
 /// Test route
