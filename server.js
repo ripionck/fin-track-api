@@ -8,7 +8,6 @@ const cors = require('cors');
 const path = require('path');
 
 dotenv.config();
-e;
 
 // Import routes
 const transactionRoutes = require('./routes/transactionRoutes');

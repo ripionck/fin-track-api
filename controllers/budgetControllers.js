@@ -15,16 +15,13 @@ const getAllBudgets = async (req, res) => {
 
 const createBudget = async (req, res) => {
   try {
-    const { categoryId, amountLimit, startDate, endDate } = req.body;
+    const { categoryId, amountLimit, startDate } = req.body;
 
     if (!amountLimit) {
       return res.status(400).json({ message: 'Amount limit is required' });
     }
     if (!startDate) {
       return res.status(400).json({ message: 'Start date is required' });
-    }
-    if (!endDate) {
-      return res.status(400).json({ message: 'End date is required' });
     }
     if (!categoryId) {
       return res.status(400).json({ message: 'Category is required' });
@@ -35,7 +32,6 @@ const createBudget = async (req, res) => {
       categoryId,
       amountLimit,
       startDate,
-      endDate,
     });
 
     await newBudget.save();
@@ -55,10 +51,10 @@ const createBudget = async (req, res) => {
 
 const updateBudget = async (req, res) => {
   try {
-    const { categoryId, amountLimit, startDate, endDate } = req.body;
+    const { categoryId, amountLimit, startDate } = req.body;
     const budget = await Budget.findByIdAndUpdate(
       req.params.id,
-      { categoryId, amountLimit, startDate, endDate },
+      { categoryId, amountLimit, startDate },
       { new: true },
     );
 
