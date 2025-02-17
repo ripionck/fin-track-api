@@ -1,74 +1,93 @@
 const User = require('../models/User');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-const getUserProfile = async (req, res) => {
+const registerUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json({ message: 'User profile retrieved successfully', user });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    const { firstName, lastName, email, password } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      firstName,
+      lastName,
+      email,
+      password: hashedPassword,
+    });
+
+    await user.save();
+    res.status(201).send(user);
+  } catch (err) {
+    res.status(400).send({ error: err.message });
   }
 };
 
-const updateUserProfile = async (req, res) => {
+const loginUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, bio, avatar, currency } =
-      req.body;
-    const updates = {};
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
 
-    if (firstName) updates.firstName = firstName;
-    if (lastName) updates.lastName = lastName;
-    if (bio) updates.bio = bio;
-    if (avatar) updates.avatar = avatar;
-    if (currency) updates.currency = currency;
-
-    // Check if email is being updated and ensure it's unique
-    if (email) {
-      const existingUser = await User.findOne({ email });
-      if (existingUser && existingUser._id.toString() !== req.user) {
-        return res.status(400).json({ message: 'Email already exists' });
-      }
-      updates.email = email;
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new Error('Invalid credentials');
     }
 
-    // Hash the password if it's being updated
-    if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      updates.password = hashedPassword;
-    }
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
+    });
 
-    // Update the user
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user,
-      { $set: updates },
-      { new: true, runValidators: true },
-    ).select('-password');
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.json({ message: 'User profile updated successfully', updatedUser });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.send({ user, token });
+  } catch (err) {
+    res.status(400).send({ error: err.message });
   }
 };
 
-const deleteUser = async (req, res) => {
+const getProfile = async (req, res) => {
+  res.send(req.user);
+};
+
+const updateProfile = async (req, res) => {
+  const updates = Object.keys(req.body);
+  const allowedUpdates = ['firstName', 'lastName', 'bio', 'currency'];
+  const isValidOperation = updates.every((update) =>
+    allowedUpdates.includes(update),
+  );
+
+  if (!isValidOperation) {
+    return res.status(400).send({ error: 'Invalid updates!' });
+  }
+
   try {
-    const user = await User.findByIdAndDelete(req.user);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    res.json({ message: 'User deleted successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    updates.forEach((update) => (req.user[update] = req.body[update]));
+    await req.user.save();
+    res.send(req.user);
+  } catch (err) {
+    res.status(400).send({ error: err.message });
   }
 };
-module.exports = { getUserProfile, updateUserProfile, deleteUser };
+
+const uploadAvatar = async (req, res) => {
+  try {
+    req.user.avatar = req.file.path;
+    await req.user.save();
+    res.send(req.user);
+  } catch (err) {
+    res.status(400).send({ error: err.message });
+  }
+};
+
+const deleteAccount = async (req, res) => {
+  try {
+    await req.user.deleteOne();
+    res.send({ message: 'Account deleted successfully' });
+  } catch (err) {
+    res.status(500).send({ error: err.message });
+  }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getProfile,
+  updateProfile,
+  uploadAvatar,
+  deleteAccount,
+};

@@ -12,17 +12,25 @@ const budgetSchema = new mongoose.Schema({
       'Utilities',
       'Shopping',
       'Healthcare',
+      'Education',
+      'Insurance',
+      'Travel',
+      'Savings',
+      'Investments',
+      'Charity',
+      'Personal Care',
+      'Miscellaneous',
     ],
   },
   limit: { type: Number, required: true },
   spent: { type: Number, default: 0 },
   remaining: { type: Number },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 });
 
-// Calculate remaining before saving
+// Auto-calculate remaining before saving
 budgetSchema.pre('save', function (next) {
   this.remaining = this.limit - this.spent;
+  if (this.spent < 0) this.spent = 0; // Prevent negative spending
   next();
 });
 
