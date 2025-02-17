@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   currency: { type: String, default: 'USD' },
   bio: { type: String, default: '' },
-  profileImage: { type: String, default: '' },
+  avatar: { type: String, default: '' },
   twoFactorEnabled: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

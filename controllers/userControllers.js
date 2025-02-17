@@ -16,21 +16,14 @@ const getUserProfile = async (req, res) => {
 
 const updateUserProfile = async (req, res) => {
   try {
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      bio,
-      profileImage,
-      currency,
-    } = req.body;
+    const { firstName, lastName, email, password, bio, avatar, currency } =
+      req.body;
     const updates = {};
 
     if (firstName) updates.firstName = firstName;
     if (lastName) updates.lastName = lastName;
     if (bio) updates.bio = bio;
-    if (profileImage) updates.profileImage = profileImage;
+    if (avatar) updates.avatar = avatar;
     if (currency) updates.currency = currency;
 
     // Check if email is being updated and ensure it's unique

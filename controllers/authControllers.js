@@ -25,27 +25,8 @@ const registerUser = async (req, res) => {
     });
     await user.save();
 
-    // Generate tokens
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
-
-    const refreshToken = jwt.sign(
-      { userId: user._id },
-      process.env.REFRESH_TOKEN_SECRET,
-      { expiresIn: '7d' },
-    );
-
     res.status(201).json({
       message: 'User registered successfully',
-      token,
-      refreshToken,
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-      },
     });
   } catch (error) {
     console.error('Registration error:', error);
