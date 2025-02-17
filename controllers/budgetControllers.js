@@ -1,139 +1,67 @@
 const Budget = require('../models/Budget');
-const { createNotification } = require('./notificationControllers');
-const Category = require('../models/Category');
 
-const getAllBudgets = async (req, res) => {
+const createBudget = async (req, res) => {
   try {
-    const budgets = await Budget.find({ userId: req.user }).populate(
-      'categoryId',
-    );
+    const { category, limit } = req.body;
+    const existingBudget = await Budget.findOne({ category });
 
-    const formattedBudgets = {
-      userId: req.user,
-      budgets: budgets.map((budget) => ({
-        _id: budget._id,
-        category: budget.categoryId,
-        amountLimit: budget.amountLimit,
-        startDate: budget.startDate,
-      })),
-    };
+    if (existingBudget) {
+      return res
+        .status(400)
+        .json({ message: 'Budget for this category already exists' });
+    }
 
-    res.json({
-      message: 'Budgets retrieved successfully',
-      ...formattedBudgets,
-    });
+    const newBudget = new Budget({ category, limit });
+    await newBudget.save();
+    res.status(201).json(newBudget);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-const createBudget = async (req, res) => {
+const getBudgets = async (req, res) => {
   try {
-    const { categoryId, amountLimit, startDate } = req.body;
-
-    if (!amountLimit) {
-      return res.status(400).json({ message: 'Amount limit is required' });
-    }
-    if (!startDate) {
-      return res.status(400).json({ message: 'Start date is required' });
-    }
-    if (!categoryId) {
-      return res.status(400).json({ message: 'Category ID is required' });
-    }
-
-    const category = await Category.findById(categoryId); // Fetch the category
-    if (!category) {
-      return res.status(400).json({ message: 'Invalid Category ID' });
-    }
-
-    const newBudget = new Budget({
-      userId: req.user,
-      categoryId, // Store the categoryId
-      amountLimit,
-      startDate,
-    });
-
-    await newBudget.save();
-
-    const populatedBudget = await Budget.findById(newBudget._id).populate(
-      'categoryId',
-    ); // Populate
-
-    createNotification(
-      req.user,
-      'budgetCreated',
-      'A new budget has been created.',
-    );
-
-    res.status(201).json({
-      message: 'Budget created successfully',
-      budget: {
-        // Format the response as you want
-        category: populatedBudget.categoryId, // Send the full category object
-        amountLimit: populatedBudget.amountLimit,
-        startDate: populatedBudget.startDate,
-      },
-    });
+    const budgets = await Budget.find();
+    res.json(budgets);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
 const updateBudget = async (req, res) => {
   try {
-    const { categoryId, amountLimit, startDate } = req.body;
-    let updateData = { amountLimit, startDate };
+    const { id } = req.params;
+    const { limit } = req.body;
 
-    if (categoryId) {
-      const category = await Category.findById(categoryId);
-      if (!category) {
-        return res.status(400).json({ message: 'Invalid Category ID' });
-      }
-      updateData.categoryId = categoryId;
-    }
+    const updatedBudget = await Budget.findByIdAndUpdate(
+      id,
+      { limit },
+      { new: true },
+    );
 
-    const budget = await Budget.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-    }).populate('categoryId');
-
-    if (!budget) {
+    if (!updatedBudget) {
       return res.status(404).json({ message: 'Budget not found' });
     }
 
-    res.json({
-      message: 'Budget updated successfully',
-      budget: {
-        category: budget.categoryId,
-        amountLimit: budget.amountLimit,
-        startDate: budget.startDate,
-      },
-    });
+    res.json(updatedBudget);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
 const deleteBudget = async (req, res) => {
   try {
-    const budget = await Budget.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    const deletedBudget = await Budget.findByIdAndDelete(id);
 
-    if (!budget) {
+    if (!deletedBudget) {
       return res.status(404).json({ message: 'Budget not found' });
     }
 
-    res.status(204).json({ message: 'Budget deleted successfully' });
+    res.json({ message: 'Budget deleted successfully' });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-module.exports = {
-  getAllBudgets,
-  createBudget,
-  updateBudget,
-  deleteBudget,
-};
+module.exports = { getBudgets, updateBudget, createBudget, deleteBudget };

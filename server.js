@@ -13,6 +13,7 @@ dotenv.config();
 const transactionRoutes = require('./routes/transactionRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 const preferenceRoutes = require('./routes/preferenceRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -65,6 +66,7 @@ app.get('/api/', (req, res) => {
 // Register routes
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/budgets', budgetRoutes);
+app.use('/api/analytics', analyticsRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/preferences', preferenceRoutes);
 app.use('/api/notifications', notificationRoutes);
