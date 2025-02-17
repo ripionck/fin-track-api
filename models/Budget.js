@@ -1,36 +1,33 @@
 const mongoose = require('mongoose');
 
-const budgetSchema = new mongoose.Schema({
-  category: {
-    type: String,
-    required: true,
-    enum: [
-      'Food',
-      'Rent',
-      'Transportation',
-      'Entertainment',
-      'Utilities',
-      'Shopping',
-      'Healthcare',
-      'Education',
-      'Insurance',
-      'Travel',
-      'Savings',
-      'Investments',
-      'Charity',
-      'Personal Care',
-      'Miscellaneous',
-    ],
+const budgetSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      required: true,
+    },
+    limit: { type: Number, required: true },
+    spent: { type: Number, default: 0 },
   },
-  limit: { type: Number, required: true },
-  spent: { type: Number, default: 0 },
-  remaining: { type: Number },
+  { timestamps: true },
+);
+
+// Virtual for remaining budget
+budgetSchema.virtual('remaining').get(function () {
+  return this.limit - this.spent;
 });
 
-// Auto-calculate remaining before saving
+// Validation for spent amount
 budgetSchema.pre('save', function (next) {
-  this.remaining = this.limit - this.spent;
-  if (this.spent < 0) this.spent = 0; // Prevent negative spending
+  if (this.spent < 0) {
+    this.spent = 0;
+  }
   next();
 });
 
