@@ -3,9 +3,12 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const helmet = require('helmet');
+const multer = require('multer');
 const cors = require('cors');
+const path = require('path');
 
 dotenv.config();
+e;
 
 // Import routes
 const transactionRoutes = require('./routes/transactionRoutes');
@@ -30,12 +33,37 @@ app.use(express.json());
 app.use(helmet());
 app.use(morgan('combined'));
 
-/// Test route
+// Configure multer storage
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './uploads');
+  },
+  filename: function (req, file, cb) {
+    cb(
+      null,
+      file.fieldname + '-' + Date.now() + path.extname(file.originalname),
+    );
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: function (req, file, cb) {
+    // Allow only JPEG and PNG images
+    if (file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/png') {
+      return cb(new Error('Only JPEG and PNG images are allowed'), false);
+    }
+    cb(null, true);
+  },
+});
+
+// Test route
 app.get('/api/', (req, res) => {
   res.status(200).json({ message: 'API is working!' });
 });
 
-// Routes
+// Register routes
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -43,6 +71,9 @@ app.use('/api/preferences', preferenceRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.post('/upload', upload.single('avatar'), (req, res) => {
+  res.send('File uploaded successfully');
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
