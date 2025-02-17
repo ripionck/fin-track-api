@@ -21,7 +21,20 @@ const createTransaction = async (req, res) => {
 
 const getTransactions = async (req, res) => {
   try {
-    const transactions = await Transaction.find().sort({ date: -1 });
+    const { startDate, endDate, category, type } = req.query;
+
+    const query = {};
+    if (startDate && endDate) {
+      query.date = { $gte: new Date(startDate), $lte: new Date(endDate) };
+    }
+    if (category && category !== 'All Categories') {
+      query.category = category;
+    }
+    if (type && type !== 'All Types') {
+      query.type = type;
+    }
+
+    const transactions = await Transaction.find(query);
     res.json(transactions);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
