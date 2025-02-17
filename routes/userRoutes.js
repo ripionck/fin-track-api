@@ -6,8 +6,8 @@ const upload = require('../middleware/upload');
 
 router.get('/profile', authMiddleware, userController.getUserProfile);
 router.put('/profile', authMiddleware, userController.updateUserProfile);
-router.put('/profile', authMiddleware, userController.deleteUser);
-router.post('/upload', upload.single('profileImage'), (req, res) => {
+router.delete('/profile', authMiddleware, userController.deleteUser);
+router.post('/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }

@@ -8,7 +8,7 @@ const registerUser = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req.body;
 
-    // Check if user already exists
+    // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already exists' });
@@ -16,43 +16,43 @@ const registerUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a new user
-    const newUser = new User({
+    // Create user
+    const user = new User({
       firstName,
       lastName,
       email,
       password: hashedPassword,
     });
-    await newUser.save();
+    await user.save();
 
-    // Generate access token
-    const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN || '1h',
+    // Generate tokens
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '1h',
     });
 
-    // Generate refresh token
     const refreshToken = jwt.sign(
-      { userId: newUser._id },
+      { userId: user._id },
       process.env.REFRESH_TOKEN_SECRET,
-      {
-        expiresIn: '7d',
-      },
+      { expiresIn: '7d' },
     );
 
     res.status(201).json({
       message: 'User registered successfully',
-      user: {
-        id: newUser._id,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName,
-        email: newUser.email,
-      },
       token,
       refreshToken,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      },
     });
   } catch (error) {
-    console.error('Error in registerUser:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Registration error:', error);
+    res.status(500).json({
+      message: 'Registration failed',
+      error: error.message,
+    });
   }
 };
 

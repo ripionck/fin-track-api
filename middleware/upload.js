@@ -1,7 +1,8 @@
+const express = require('express');
 const multer = require('multer');
 const path = require('path');
 
-// Set storage engine
+// Set up storage engine
 const storage = multer.diskStorage({
   destination: './uploads/',
   filename: (req, file, cb) => {
@@ -13,22 +14,6 @@ const storage = multer.diskStorage({
 });
 
 // Initialize upload
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|gif/;
-    const extname = filetypes.test(
-      path.extname(file.originalname).toLowerCase(),
-    );
-    const mimetype = filetypes.test(file.mimetype);
-
-    if (extname && mimetype) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only images are allowed'));
-    }
-  },
-});
+const upload = multer({ storage });
 
 module.exports = upload;
