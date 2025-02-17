@@ -1,15 +1,12 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
 const bodyParser = require('body-parser');
 
-dotenv.config();
-
-// Import routes
 const transactionRoutes = require('./routes/transactionRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
@@ -28,7 +25,6 @@ app.use(
   }),
 );
 
-// Middleware
 app.use(bodyParser.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(helmet());
@@ -60,10 +56,7 @@ app.use((err, req, res, next) => {
 // Database connection
 mongoose.set('strictQuery', false);
 mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');
   })
