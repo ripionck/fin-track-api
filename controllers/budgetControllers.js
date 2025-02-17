@@ -8,17 +8,19 @@ const getAllBudgets = async (req, res) => {
       'categoryId',
     );
 
-    const formattedBudgets = budgets.map((budget) => ({
-      _id: budget._id,
-      userId: budget.userId,
-      category: budget.categoryId,
-      amountLimit: budget.amountLimit,
-      startDate: budget.startDate,
-    }));
+    const formattedBudgets = {
+      userId: req.user,
+      budgets: budgets.map((budget) => ({
+        _id: budget._id,
+        category: budget.categoryId,
+        amountLimit: budget.amountLimit,
+        startDate: budget.startDate,
+      })),
+    };
 
     res.json({
       message: 'Budgets retrieved successfully',
-      budgets: formattedBudgets,
+      ...formattedBudgets,
     });
   } catch (error) {
     console.error(error);
