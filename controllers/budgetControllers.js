@@ -51,22 +51,6 @@ const getBudgets = async (req, res) => {
   }
 };
 
-const getBudgetById = async (req, res) => {
-  try {
-    const budget = await Budget.findById(req.params.id).populate('category');
-    if (!budget) {
-      return res.status(404).json({ message: 'Budget not found' });
-    }
-    res.json(budget);
-  } catch (error) {
-    console.error('Error in getBudgetById:', error);
-    if (error.name === 'CastError' && error.kind === 'ObjectId') {
-      return res.status(404).json({ message: 'Invalid Budget ID' });
-    }
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
 const updateBudget = async (req, res) => {
   try {
     const { id } = req.params;
@@ -105,7 +89,6 @@ const deleteBudget = async (req, res) => {
 
 module.exports = {
   getBudgets,
-  getBudgetById,
   updateBudget,
   createBudget,
   deleteBudget,
