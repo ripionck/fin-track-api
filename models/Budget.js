@@ -24,6 +24,11 @@ const budgetSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Spent amount cannot be negative'],
     },
+    startDate: {
+      type: Date,
+      required: [true, 'Start date is required'],
+      default: () => new Date(),
+    },
   },
   {
     timestamps: true,
@@ -43,7 +48,6 @@ budgetSchema.pre('save', function (next) {
   if (this.spent > this.limit) {
     return next(new Error('Spent amount cannot exceed budget limit'));
   }
-
   // Round monetary values to 2 decimal places
   this.limit = parseFloat(this.limit.toFixed(2));
   this.spent = parseFloat(this.spent.toFixed(2));

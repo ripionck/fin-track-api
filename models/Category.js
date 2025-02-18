@@ -16,11 +16,11 @@ const categorySchema = new mongoose.Schema(
     },
     icon: {
       type: String,
-      default: '🍔',
+      required: [true, 'Category icon is required'],
     },
     color: {
       type: String,
-      default: 'bg-orange-500',
+      required: [true, 'Category color is required'],
     },
   },
   { timestamps: true },
