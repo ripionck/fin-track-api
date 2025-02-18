@@ -3,7 +3,7 @@ const Category = require('../models/Category');
 const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find();
-    res.json({ message: 'Categories retrieved successfully', categories });
+    res.json(categories);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -13,20 +13,32 @@ const getAllCategories = async (req, res) => {
 const createCategory = async (req, res) => {
   try {
     const { name, icon, color } = req.body;
+    const userId = req.user.id;
 
-    const existingCategory = await Category.findOne({ name });
+    if (!userId) {
+      return res
+        .status(401)
+        .json({ message: 'Unauthorized: User ID is missing' });
+    }
+
+    const existingCategory = await Category.findOne({ name, user: userId });
     if (existingCategory) {
       return res
         .status(400)
-        .json({ message: 'Category with this name already exists' });
+        .json({
+          message: 'Category with this name already exists for this user',
+        });
     }
 
     const newCategory = new Category({
       name,
       icon,
       color,
+      user: userId,
     });
+
     await newCategory.save();
+
     res.status(201).json({
       message: 'Category created successfully',
       category: newCategory,

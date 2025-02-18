@@ -5,13 +5,26 @@ const categorySchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: [true, 'User ID is required'],
+      index: true,
     },
-    name: { type: String, required: true },
-    icon: String,
-    color: String,
+    name: {
+      type: String,
+      required: [true, 'Category name is required'],
+      trim: true,
+      maxlength: [50, 'Category name cannot exceed 50 characters'],
+    },
+    icon: {
+      type: String,
+      default: '🍔',
+    },
+    color: {
+      type: String,
+      default: 'bg-orange-500',
+    },
   },
   { timestamps: true },
 );
 
+// Create and export the model
 module.exports = mongoose.model('Category', categorySchema);
