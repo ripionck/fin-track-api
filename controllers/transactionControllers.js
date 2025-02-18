@@ -36,42 +36,46 @@ const reverseBudgetUpdate = async (userId, category, amount) => {
 const createTransaction = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
+  console.log('Request Body:', req.body);
 
   try {
     const { date, description, category, type, amount } = req.body;
     const userId = req.user.id;
 
-    // Validate transaction type
-    if (!['income', 'expense'].includes(type)) {
-      throw new Error('Invalid transaction type');
+    // Validate input
+    if (!date || !description || !category || !type || amount === undefined) {
+      throw new Error('Missing required fields');
     }
 
-    // Validate amount
-    if (typeof amount !== 'number' || amount === 0) {
-      throw new Error('Invalid transaction amount');
+    if (typeof amount !== 'number') {
+      throw new Error('Invalid amount format');
     }
+
+    // Normalize type to lowercase
+    const normalizedType = type.toLowerCase();
 
     // Check budget only for expenses
-    if (type === 'expense') {
+    if (normalizedType === 'expense') {
       await validateAndUpdateBudget(userId, category, amount);
     }
 
-    const newTransaction = await Transaction.create(
-      [
-        {
-          user: userId,
-          date,
-          description,
-          category,
-          type,
-          amount: type === 'expense' ? -Math.abs(amount) : Math.abs(amount),
-        },
-      ],
-      { session },
-    );
+    const newTransaction = new Transaction({
+      user: userId,
+      date,
+      description,
+      category,
+      type: normalizedType,
+      amount:
+        normalizedType === 'expense' ? -Math.abs(amount) : Math.abs(amount),
+    });
+
+    await newTransaction.save({ session });
 
     await session.commitTransaction();
-    res.status(201).json(newTransaction[0]);
+    res.status(201).json({
+      success: true,
+      data: newTransaction,
+    });
   } catch (error) {
     await session.abortTransaction();
     const statusCode = error.message.includes('exceeds') ? 400 : 500;
@@ -88,6 +92,7 @@ const getTransactions = async (req, res) => {
   try {
     const transactions = await Transaction.find({ user: req.user.id })
       .sort({ date: -1 })
+      .populate('category', 'name')
       .lean();
 
     res.json({
@@ -97,7 +102,7 @@ const getTransactions = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch transactions',
+      message: `Failed to fetch transactions: ${error.message}`,
     });
   }
 };
@@ -111,16 +116,16 @@ const updateTransaction = async (req, res) => {
     const userId = req.user.id;
     const updates = req.body;
 
-    // Get existing transaction
     const oldTransaction = await Transaction.findOne({
       _id: id,
       user: userId,
     }).session(session);
+
     if (!oldTransaction) {
       throw new Error('Transaction not found');
     }
 
-    // Reverse old budget impact if it was an expense
+    // Reverse budget update for old transaction if it was an expense
     if (oldTransaction.type === 'expense') {
       await reverseBudgetUpdate(
         userId,
@@ -135,22 +140,34 @@ const updateTransaction = async (req, res) => {
     }
 
     // Apply updates
-    const updatedTransaction = await Transaction.findOneAndUpdate(
-      { _id: id, user: userId },
-      updates,
-      { new: true, session },
-    );
+    Object.keys(updates).forEach((key) => {
+      if (updates[key] !== undefined) {
+        oldTransaction[key] = updates[key];
+      }
+    });
 
-    // Validate and update new budget if expense
-    if (updatedTransaction.type === 'expense') {
+    // Normalize type to lowercase
+    if (updates.type) {
+      oldTransaction.type = updates.type.toLowerCase();
+    }
+
+    // Validate and update budget for new transaction if it's an expense
+    if (oldTransaction.type === 'expense') {
       await validateAndUpdateBudget(
         userId,
-        updatedTransaction.category,
-        updatedTransaction.amount,
+        oldTransaction.category,
+        oldTransaction.amount,
       );
     }
 
+    await oldTransaction.save({ session });
     await session.commitTransaction();
+
+    // Populate after committing and before sending the response
+    const updatedTransaction = await Transaction.findById(id)
+      .populate('category', 'name')
+      .lean();
+
     res.json({
       success: true,
       data: updatedTransaction,
@@ -179,10 +196,12 @@ const deleteTransaction = async (req, res) => {
       _id: id,
       user: userId,
     }).session(session);
+
     if (!transaction) {
       throw new Error('Transaction not found');
     }
 
+    // Reverse budget update if the transaction was an expense
     if (transaction.type === 'expense') {
       await reverseBudgetUpdate(
         userId,

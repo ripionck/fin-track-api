@@ -27,7 +27,7 @@ app.use(
 );
 
 app.use(bodyParser.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static('uploads'));
 app.use(helmet());
 app.use(morgan('combined'));
 

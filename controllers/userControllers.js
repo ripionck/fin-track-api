@@ -31,7 +31,7 @@ const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
+      expiresIn: '5h',
     });
 
     res.send({ user, token });
@@ -46,7 +46,15 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   const updates = Object.keys(req.body);
-  const allowedUpdates = ['firstName', 'lastName', 'bio', 'currency'];
+  // Add 'email' and 'twoFactorEnabled' to allowed updates
+  const allowedUpdates = [
+    'firstName',
+    'lastName',
+    'bio',
+    'currency',
+    'twoFactorEnabled',
+    'email',
+  ];
   const isValidOperation = updates.every((update) =>
     allowedUpdates.includes(update),
   );
@@ -56,6 +64,16 @@ const updateProfile = async (req, res) => {
   }
 
   try {
+    if (updates.includes('email')) {
+      const existingUser = await User.findOne({ email: req.body.email });
+      if (
+        existingUser &&
+        existingUser._id.toString() !== req.user._id.toString()
+      ) {
+        return res.status(400).send({ error: 'Email already in use' });
+      }
+    }
+
     updates.forEach((update) => (req.user[update] = req.body[update]));
     await req.user.save();
     res.send(req.user);
@@ -66,11 +84,20 @@ const updateProfile = async (req, res) => {
 
 const uploadAvatar = async (req, res) => {
   try {
-    req.user.avatar = req.file.path;
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file selected' });
+    }
+
+    const avatarPath = `/uploads/avatars/${req.file.filename}`;
+    req.user.avatar = avatarPath;
     await req.user.save();
-    res.send(req.user);
+
+    res.json({
+      ...req.user.toJSON(),
+      avatar: avatarPath,
+    });
   } catch (err) {
-    res.status(400).send({ error: err.message });
+    res.status(500).json({ error: 'Server upload error' });
   }
 };
 

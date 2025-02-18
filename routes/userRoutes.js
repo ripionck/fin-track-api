@@ -12,7 +12,19 @@ router.put('/me', authMiddleware, userController.updateProfile);
 router.put(
   '/me/avatar',
   authMiddleware,
-  upload.single('avatar'),
+  (req, res, next) => {
+    upload(req, res, (err) => {
+      if (err) {
+        return res.status(400).json({
+          error:
+            err instanceof multer.MulterError
+              ? 'File too large (max 2MB)'
+              : err.message,
+        });
+      }
+      next();
+    });
+  },
   userController.uploadAvatar,
 );
 router.delete('/me', authMiddleware, userController.deleteAccount);
