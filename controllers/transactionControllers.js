@@ -36,11 +36,14 @@ const reverseBudgetUpdate = async (userId, category, amount) => {
 const createTransaction = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-  console.log('Request Body:', req.body);
 
   try {
     const { date, description, category, type, amount } = req.body;
     const userId = req.user.id;
+
+    // Convert date to UTC
+    const utcDate = new Date(date);
+    utcDate.setUTCHours(0, 0, 0, 0);
 
     // Validate input
     if (!date || !description || !category || !type || amount === undefined) {
@@ -61,7 +64,7 @@ const createTransaction = async (req, res) => {
 
     const newTransaction = new Transaction({
       user: userId,
-      date,
+      date: utcDate,
       description,
       category,
       type: normalizedType,
@@ -90,15 +93,39 @@ const createTransaction = async (req, res) => {
 
 const getTransactions = async (req, res) => {
   try {
-    const transactions = await Transaction.find({ user: req.user.id })
-      .sort({ date: -1 })
+    const { startDate, endDate, category, type, sort } = req.query;
+    const userId = req.user.id;
+
+    const query = { user: userId };
+
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    }
+
+    if (category && category !== 'All Categories') {
+      query.category = category;
+    }
+
+    if (type && type !== 'All Types') {
+      query.type = type.toLowerCase();
+    }
+
+    const sortOptions = {
+      'Date (Newest)': { date: -1 },
+      'Date (Oldest)': { date: 1 },
+      'Amount (High to Low)': { amount: -1 },
+      'Amount (Low to High)': { amount: 1 },
+    };
+
+    const transactions = await Transaction.find(query)
+      .sort(sortOptions[sort] || { date: -1 })
       .populate('category', 'name')
       .lean();
 
-    res.json({
-      success: true,
-      data: transactions,
-    });
+    res.json({ success: true, data: transactions });
   } catch (error) {
     res.status(500).json({
       success: false,

@@ -13,6 +13,7 @@ const preferenceSchema = new mongoose.Schema(
     compactView: { type: Boolean, default: false },
     language: { type: String, default: 'en' },
     startOfWeek: { type: String, default: 'sunday' },
+    currency: { type: String, default: 'USD' },
   },
   { timestamps: true },
 );

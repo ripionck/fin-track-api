@@ -9,7 +9,9 @@ const transactionSchema = new mongoose.Schema(
     },
     date: {
       type: Date,
-      default: Date.now,
+      required: true,
+      index: true,
+      get: (date) => date.toISOString().split('T')[0],
     },
     description: {
       type: String,
@@ -30,7 +32,11 @@ const transactionSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamps: true },
+  { toJSON: { getters: true } },
 );
+
+transactionSchema.index({ user: 1, date: 1 });
+transactionSchema.index({ user: 1, category: 1 });
+transactionSchema.index({ user: 1, type: 1 });
 
 module.exports = mongoose.model('Transaction', transactionSchema);
