@@ -32,7 +32,7 @@ Welcome to the FinTrack API documentation. This guide provides detailed informat
 ### User Register
 Register a new user.
 
-**Endpoint:** `POST http://localhost:5000/api/auth/register`
+**Endpoint:** `POST http://localhost:5000/api/users/register`
 
 **Body:**
 ```json
@@ -47,7 +47,7 @@ Register a new user.
 ### User Login
 Login an existing user.
 
-**Endpoint:** `POST http://localhost:5000/api/user/login/`
+**Endpoint:** `POST http://localhost:5000/api/users/login/`
 
 **Body:**
 ```json
@@ -60,7 +60,7 @@ Login an existing user.
 ### User Profile
 Retrieve the profile of the logged-in user.
 
-**Endpoint:** `GET http://localhost:5000/api/users/profile`
+**Endpoint:** `GET http://localhost:5000/api/users/me`
 
 **Authorization:** Bearer Token
 
