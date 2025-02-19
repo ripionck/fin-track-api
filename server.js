@@ -44,11 +44,16 @@ app.use('/api/preferences', preferenceRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 
-// Database Connection
+// Database connection
+mongoose.set('strictQuery', false);
 mongoose
   .connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB Connected'))
-  .catch((err) => console.error('MongoDB Error:', err));
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((error) => {
+    console.error('MongoDB connection error:', error.message);
+  });
 
 // Error Handling
 app.use((err, req, res, next) => {
