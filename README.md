@@ -91,6 +91,7 @@ Retrieve the profile of the logged-in user.
 
 **Token:** `<token>`
 
+---
 ## Categories
 
 ### Create a Category
@@ -147,6 +148,7 @@ Delete a category.
 
 **Token:** `<token>`
 
+---
 ## Transactions
 
 ### Create a Transaction
@@ -207,6 +209,7 @@ Delete a transaction.
 
 **Token:** `<token>`
 
+---
 ## Budgets
 
 ### Create a Budget
@@ -248,12 +251,12 @@ Update an existing budget.
 ```json
 {
   "categoryId": "67b1dbb650c9bf327c120d21",
-  "amountLimit": 5000,
+  "limit": 5000,
   "startDate": "2024-08-01",
   "endDate": "2024-08-31"
 }
 ```
-
+---
 ## Analytics
 
 ### 30 Days Analytics
@@ -283,6 +286,7 @@ Retrieve analytics for the current year.
 
 **Token:** `<token>`
 
+---
 ## Test
 
 ### Test
