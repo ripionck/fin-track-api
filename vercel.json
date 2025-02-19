@@ -3,29 +3,13 @@
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["routes/**", "uploads/**", ".env"]
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/health",
-      "dest": "server.js"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "server.js"
-    },
-    {
-      "src": "/uploads/(.*)",
-      "dest": "server.js"
-    },
-    {
       "src": "/(.*)",
-      "dest": "server.js",
-      "methods": ["GET"]
+      "dest": "/"
     }
   ]
 }
