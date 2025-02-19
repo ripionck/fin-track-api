@@ -47,13 +47,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/', (req, res) => {
   res.status(200).json({ status: 'OK' });
 });
-app.use('/api/transactions', transactionRoutes);
-app.use('/api/budgets', budgetRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/preferences', preferenceRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/users', userRoutes);
+app.use('/transactions', transactionRoutes);
+app.use('/budgets', budgetRoutes);
+app.use('/categories', categoryRoutes);
+app.use('/analytics', analyticsRoutes);
+app.use('/preferences', preferenceRoutes);
+app.use('/notifications', notificationRoutes);
+app.use('/users', userRoutes);
 
 // Error Handling
 app.use((err, req, res, next) => {
