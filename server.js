@@ -15,29 +15,19 @@ const analyticsRoutes = require('./routes/analyticsRoutes');
 const preferenceRoutes = require('./routes/preferenceRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const userRoutes = require('./routes/userRoutes');
-const healthRoutes = require('./routes/health');
 
 const app = express();
 
 // Database connection setup
-let cachedDb = null;
-
-const connectToDatabase = async () => {
-  if (cachedDb) return cachedDb;
-
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 3000,
-      maxPoolSize: 5,
-      socketTimeoutMS: 30000,
-    });
-    cachedDb = conn;
-    return conn;
-  } catch (error) {
-    console.error('MongoDB connection failed:', error);
-    throw error;
-  }
-};
+mongoose.set('strictQuery', false);
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((error) => {
+    console.error('MongoDB connection error:', error.message);
+  });
 
 // Middleware
 app.use(express.json());
@@ -53,34 +43,10 @@ app.use(
 );
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Database connection middleware
-app.use(async (req, res, next) => {
-  try {
-    await connectToDatabase();
-    next();
-  } catch (error) {
-    res.status(500).json({ error: 'Database connection failed' });
-  }
+// Routes
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'OK' });
 });
-
-// Routes (Order matters!)
-app.get('/', (req, res) =>
-  res.json({
-    status: 'API Running',
-    endpoints: [
-      '/health',
-      '/api/transactions',
-      '/api/budgets',
-      '/api/categories',
-      '/api/analytics',
-      '/api/preferences',
-      '/api/notifications',
-      '/api/users',
-    ],
-  }),
-);
-
-app.use('/health', healthRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/categories', categoryRoutes);
