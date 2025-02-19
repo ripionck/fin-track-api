@@ -27,6 +27,31 @@ Welcome to the FinTrack API documentation. This guide provides detailed informat
    - [Year Analytics](#year-analytics)
 6. [Test](#test)
 
+## Installation
+
+To get started with FinTrack, follow these steps:
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/ripionck/fin-track-api.git
+   cd fin-track-api
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   yarn install
+   ```
+
+3. **Set up environment variables**:
+   - Create a `.env` file in the `server` directory and add the following variables:
+     ```env
+     MONGO_URI=your_mongodb_connection_string
+     JWT_SECRET=your_jwt_secret_key
+     PORT=5000
+     ```
+---
+
+Thank you for using FinTrack! We hope it helps you manage your finances more effectively.
 ## Users
 
 ### User Register
