@@ -1,12 +1,13 @@
 require('dotenv').config();
 const express = require('express');
+const serverless = require('serverless-http');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
-const bodyParser = require('body-parser');
 
+// Route imports
 const transactionRoutes = require('./routes/transactionRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
@@ -17,37 +18,24 @@ const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
+// CORS Configuration
 app.use(
   cors({
-    origin: function (origin, callback) {
-      const allowedOrigins = [
-        'https://fin-track-azure.vercel.app',
-        'http://localhost:5173',
-      ];
-
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: ['https://fin-track-azure.vercel.app', 'http://localhost:5173'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   }),
 );
 
-app.use(bodyParser.json());
-app.use('/uploads', express.static('uploads'));
+// Middleware
+app.use(express.json());
 app.use(helmet());
-app.use(morgan('combined'));
+app.use(morgan('dev'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Test route
-app.get('/', (req, res) => {
-  res.status(200).json({ message: 'API is working!' });
-});
-
-// Register routes
+// Routes
+app.get('/', (req, res) => res.json({ status: 'API Running' }));
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/analytics', analyticsRoutes);
@@ -56,39 +44,26 @@ app.use('/api/preferences', preferenceRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/users', userRoutes);
 
-// Error handling middleware
+// Database Connection
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log('MongoDB Connected'))
+  .catch((err) => console.error('MongoDB Error:', err));
+
+// Error Handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
-    message: 'Internal Server Error',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    error:
+      process.env.NODE_ENV === 'development' ? err.message : 'Server Error',
   });
 });
 
-// Database connection
-mongoose.set('strictQuery', false);
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-  })
-  .catch((error) => {
-    console.error('MongoDB connection error:', error.message);
-  });
+// Serverless Configuration
+module.exports.handler = serverless(app);
 
-const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
-    mongoose.connection.close(false, () => {
-      console.log('MongoDB connection closed');
-      process.exit(0);
-    });
-  });
-});
+// Local Development
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`Local server on port ${PORT}`));
+}
