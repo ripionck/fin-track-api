@@ -21,6 +21,8 @@ const getPreference = async (req, res) => {
         startOfWeek: 'sunday',
         currency: 'USD',
       });
+
+      await newPreference.validate();
       preference = await newPreference.save();
     }
 
