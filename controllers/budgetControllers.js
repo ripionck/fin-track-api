@@ -44,7 +44,8 @@ const createBudget = async (req, res) => {
 
 const getBudgets = async (req, res) => {
   try {
-    const budgets = await Budget.find();
+    const userId = req.user.id;
+    const budgets = await Budget.find({ user: userId }).populate('category');
     res.json(budgets);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -55,15 +56,18 @@ const updateBudget = async (req, res) => {
   try {
     const { id } = req.params;
     const { limit } = req.body;
+    const userId = req.user.id;
 
-    const updatedBudget = await Budget.findByIdAndUpdate(
-      id,
+    const updatedBudget = await Budget.findOneAndUpdate(
+      { _id: id, user: userId },
       { limit },
-      { new: true },
-    );
+      { new: true, runValidators: true },
+    ).populate('category');
 
     if (!updatedBudget) {
-      return res.status(404).json({ message: 'Budget not found' });
+      return res
+        .status(404)
+        .json({ message: 'Budget not found or not authorized' });
     }
 
     res.json(updatedBudget);
@@ -75,10 +79,17 @@ const updateBudget = async (req, res) => {
 const deleteBudget = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedBudget = await Budget.findByIdAndDelete(id);
+    const userId = req.user.id;
+
+    const deletedBudget = await Budget.findOneAndDelete({
+      _id: id,
+      user: userId,
+    });
 
     if (!deletedBudget) {
-      return res.status(404).json({ message: 'Budget not found' });
+      return res
+        .status(404)
+        .json({ message: 'Budget not found or not authorized' });
     }
 
     res.json({ message: 'Budget deleted successfully' });
