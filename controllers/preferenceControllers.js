@@ -2,13 +2,17 @@ const Preference = require('../models/Preference');
 
 const getPreference = async (req, res) => {
   try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ error: 'Unauthorized: User not found' });
+    }
+
     let preference = await Preference.findOne({ user: req.user._id }).populate(
       'user',
       'email',
     );
 
     if (!preference) {
-      preference = await Preference.create({
+      const newPreference = new Preference({
         user: req.user._id,
         theme: 'light',
         dateFormat: 'MM/DD/YYYY',
@@ -17,10 +21,12 @@ const getPreference = async (req, res) => {
         startOfWeek: 'sunday',
         currency: 'USD',
       });
+      preference = await newPreference.save();
     }
 
     res.status(200).json(preference);
   } catch (error) {
+    console.error('Error in getPreference:', error);
     res.status(500).json({ error: error.message });
   }
 };
