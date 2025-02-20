@@ -35,7 +35,7 @@ app.use(helmet());
 app.use(morgan('dev'));
 app.use(
   cors({
-    origin: ['https://shop-ease-3oxf.onrender.com', 'http://localhost:5173'],
+    origin: ['https://fin-track-azure.vercel.app', 'http://localhost:5173'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
