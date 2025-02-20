@@ -92,11 +92,9 @@ const uploadAvatar = async (req, res) => {
     req.user.avatar = avatarPath;
     await req.user.save();
 
-    res.json({
-      ...req.user.toJSON(),
-      avatar: avatarPath,
-    });
+    res.json({ ...req.user.toJSON(), avatar: avatarPath });
   } catch (err) {
+    console.error('Server upload error:', err);
     res.status(500).json({ error: 'Server upload error' });
   }
 };

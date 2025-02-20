@@ -15,12 +15,7 @@ router.put(
   (req, res, next) => {
     upload(req, res, (err) => {
       if (err) {
-        return res.status(400).json({
-          error:
-            err instanceof multer.MulterError
-              ? 'File too large (max 2MB)'
-              : err.message,
-        });
+        return res.status(400).json({ error: err.message });
       }
       next();
     });
