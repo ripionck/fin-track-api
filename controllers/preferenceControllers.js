@@ -6,25 +6,20 @@ const getPreference = async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized: User not found' });
     }
 
-    let preference = await Preference.findOne({ user: req.user._id }).populate(
-      'user',
-      'email',
-    );
-
-    if (!preference) {
-      const newPreference = new Preference({
-        user: req.user._id,
-        theme: 'light',
-        dateFormat: 'MM/DD/YYYY',
-        compactView: false,
-        language: 'en',
-        startOfWeek: 'sunday',
-        currency: 'USD',
-      });
-
-      await newPreference.validate();
-      preference = await newPreference.save();
-    }
+    const preference = await Preference.findOneAndUpdate(
+      { user: req.user._id },
+      {
+        $setOnInsert: {
+          theme: 'light',
+          dateFormat: 'MM/DD/YYYY',
+          compactView: false,
+          language: 'en',
+          startOfWeek: 'sunday',
+          currency: 'USD',
+        },
+      },
+      { new: true, upsert: true, runValidators: true },
+    ).populate('user', 'email');
 
     res.status(200).json(preference);
   } catch (error) {
