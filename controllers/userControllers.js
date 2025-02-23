@@ -41,7 +41,21 @@ const loginUser = async (req, res) => {
 };
 
 const getProfile = async (req, res) => {
-  res.send(req.user);
+  const userData = {
+    _id: req.user._id,
+    firstName: req.user.firstName,
+    lastName: req.user.lastName,
+    email: req.user.email,
+    currency: req.user.currency,
+    bio: req.user.bio,
+    avatar: req.user.avatar,
+    twoFactorEnabled: req.user.twoFactorEnabled,
+    notifications: req.user.notifications,
+    createdAt: req.user.createdAt,
+    updatedAt: req.user.updatedAt,
+  };
+
+  res.send(userData);
 };
 
 const updateProfile = async (req, res) => {

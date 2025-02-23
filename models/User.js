@@ -18,7 +18,16 @@ const userSchema = new mongoose.Schema(
       marketingEmails: { type: Boolean, default: false },
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: {
+      transform: function (doc, ret) {
+        delete ret.password;
+        delete ret.__v;
+        return ret;
+      },
+    },
+  },
 );
 
 module.exports = mongoose.model('User', userSchema);
