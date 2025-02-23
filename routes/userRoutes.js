@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/register', userController.registerUser);
 router.post('/login', userController.loginUser);
 router.get('/me', authMiddleware, userController.getProfile);
-router.put('/me', authMiddleware, userController.updateProfile);
+router.patch('/me', authMiddleware, userController.updateProfile);
 router.put(
   '/me/avatar',
   authMiddleware,
