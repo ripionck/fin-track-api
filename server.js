@@ -36,7 +36,7 @@ app.use(morgan('dev'));
 app.use(
   cors({
     origin: ['http://localhost:5173', 'https://fin-track-azure.vercel.app'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
 );
