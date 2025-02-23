@@ -19,6 +19,20 @@ const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
+const url = `https://fin-track-api-ags1.onrender.com`;
+const interval = 30000;
+function reloadWebsite() {
+  axios
+    .get(url)
+    .then((response) => {
+      console.log('Website reload');
+    })
+    .catch((error) => {
+      console.error(`Error : ${error.message}`);
+    });
+}
+setInterval(reloadWebsite, interval);
+
 // Database connection
 const connectDB = async () => {
   try {
