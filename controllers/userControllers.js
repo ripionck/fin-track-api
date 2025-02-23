@@ -46,7 +46,6 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   const updates = Object.keys(req.body);
-  // Add 'email' and 'twoFactorEnabled' to allowed updates
   const allowedUpdates = [
     'firstName',
     'lastName',

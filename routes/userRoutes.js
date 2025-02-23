@@ -12,15 +12,23 @@ router.put('/me', authMiddleware, userController.updateProfile);
 router.put(
   '/me/avatar',
   authMiddleware,
-  (req, res, next) => {
-    upload(req, res, (err) => {
-      if (err) {
-        return res.status(400).json({ error: err.message });
+  upload.single('avatar'),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
       }
-      next();
-    });
+
+      const avatarPath = `/uploads/avatars/${req.file.filename}`;
+      req.user.avatar = avatarPath;
+      await req.user.save();
+
+      res.json({ avatar: avatarPath });
+    } catch (err) {
+      console.error('Avatar upload error:', err);
+      res.status(500).json({ error: 'Failed to upload avatar' });
+    }
   },
-  userController.uploadAvatar,
 );
 router.delete('/me', authMiddleware, userController.deleteAccount);
 

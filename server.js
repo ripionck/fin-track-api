@@ -35,13 +35,13 @@ app.use(helmet());
 app.use(morgan('dev'));
 app.use(
   cors({
-    origin: ['https://fin-track-azure.vercel.app', 'http://localhost:5173'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    origin: ['http://localhost:5173', 'https://fin-track-azure.vercel.app'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
   }),
 );
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // Routes
 app.get('/', (req, res) => {
