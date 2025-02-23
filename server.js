@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
+const axios = require('axios');
 
 // Route imports
 const transactionRoutes = require('./routes/transactionRoutes');
@@ -37,10 +38,7 @@ setInterval(reloadWebsite, interval);
 const connectDB = async () => {
   try {
     mongoose.set('strictQuery', true);
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log('MongoDB connected successfully');
   } catch (err) {
     console.error('MongoDB connection error:', err.message);
