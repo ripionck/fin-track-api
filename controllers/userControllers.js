@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+const { uploadToCloudinary } = require('../middleware/upload');
 const jwt = require('jsonwebtoken');
 
 const registerUser = async (req, res) => {
@@ -88,17 +89,34 @@ const updateProfile = async (req, res) => {
 const uploadAvatar = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+      return res.status(400).json({
+        status: 'error',
+        message: 'No file uploaded',
+      });
     }
 
-    const avatarPath = `/uploads/avatars/${req.file.filename}`;
-    req.user.avatar = avatarPath;
-    await req.user.save();
+    // Upload to Cloudinary
+    const result = await uploadToCloudinary(req.file.buffer);
 
-    res.json({ avatar: avatarPath });
+    // Update user with Cloudinary URL
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatar: result.secure_url },
+      { new: true, runValidators: true },
+    );
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        avatar: user.avatar,
+      },
+    });
   } catch (err) {
     console.error('Avatar upload error:', err);
-    res.status(500).json({ error: 'Failed to process avatar upload' });
+    res.status(500).json({
+      status: 'error',
+      message: err.message || 'Failed to process avatar upload',
+    });
   }
 };
 
