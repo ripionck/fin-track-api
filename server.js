@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const serverless = require('serverless-http');
 const mongoose = require('mongoose');
 const morgan = require('morgan');
 const helmet = require('helmet');
@@ -18,32 +17,16 @@ const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
-// Serverless-optimized MongoDB connection
-let cached = global.mongoose;
-if (!cached) cached = global.mongoose = { conn: null, promise: null };
-
+// Database connection
 const connectDB = async () => {
-  if (cached.conn) return cached.conn;
-
-  if (!cached.promise) {
-    cached.promise = mongoose
-      .connect(process.env.MONGODB_URI, {
-        bufferCommands: false,
-        serverSelectionTimeoutMS: 5000,
-      })
-      .then((mongoose) => mongoose);
-  }
-
   try {
-    cached.conn = await cached.promise;
+    mongoose.set('strictQuery', true);
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log('MongoDB connected successfully');
-  } catch (e) {
-    cached.promise = null;
-    console.error('MongoDB connection error:', e.message);
-    throw e;
+  } catch (err) {
+    console.error('MongoDB connection error:', err.message);
+    process.exit(1);
   }
-
-  return cached.conn;
 };
 
 // Middleware
@@ -55,20 +38,13 @@ app.use(
   cors({
     origin: ['http://localhost:5173', 'https://fin-track-azure.vercel.app'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   }),
 );
 
-// Health check endpoint with DB connection check
-app.get('/health', async (req, res) => {
-  try {
-    await connectDB();
-    res.status(200).json({ status: 'OK', db: 'Connected' });
-  } catch (err) {
-    res.status(500).json({ status: 'DOWN', db: 'Connection failed' });
-  }
-});
+// Health check endpoint
+app.get('/', (req, res) => res.status(200).json({ status: 'OK' }));
 
 // API Routes
 app.use('/api/v1/transactions', transactionRoutes);
@@ -79,29 +55,19 @@ app.use('/api/v1/preferences', preferenceRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/users', userRoutes);
 
-// 404 Handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    status: 'fail',
-    message: `Can't find ${req.originalUrl} on this server!`,
-  });
-});
-
 // Global Error Handler
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
-  const message =
-    process.env.NODE_ENV === 'production'
-      ? 'Something went wrong!'
-      : err.message;
+  const status = err.status || 'error';
 
+  // Log error stack in development
   if (process.env.NODE_ENV === 'development') {
     console.error('💥 ERROR 💥', err.stack);
   }
 
   res.status(statusCode).json({
-    status: 'error',
-    message,
+    status,
+    message: err.message,
     ...(process.env.NODE_ENV === 'development' && {
       stack: err.stack,
       error: err,
@@ -109,17 +75,13 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Serverless configuration
-module.exports.handler = serverless(app);
+// Connect to database
+connectDB();
 
-// Local server configuration
-if (require.main === module) {
-  const PORT = process.env.PORT || 5000;
-  connectDB().then(() => {
-    app.listen(PORT, () => {
-      console.log(
-        `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`,
-      );
-    });
-  });
-}
+// Local server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+});
+
+module.exports = app;
