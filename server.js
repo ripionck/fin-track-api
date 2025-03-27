@@ -6,8 +6,6 @@ const morgan = require('morgan');
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
-const multer = require('multer');
-const axios = require('axios');
 
 // Route imports
 const transactionRoutes = require('./routes/transactionRoutes');
@@ -20,32 +18,33 @@ const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 
-const url = `https://fin-track-api-ags1.onrender.com`;
-const interval = 30000;
-function reloadWebsite() {
-  axios
-    .get(url)
-    .then((response) => {
-      console.log('Website reload');
-    })
-    .catch((error) => {
-      console.error(`Error : ${error.message}`);
-    });
-}
-setInterval(reloadWebsite, interval);
+// Serverless-optimized MongoDB connection
+let cached = global.mongoose;
+if (!cached) cached = global.mongoose = { conn: null, promise: null };
 
-// Database connection
 const connectDB = async () => {
-  try {
-    mongoose.set('strictQuery', true);
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log('MongoDB connected successfully');
-  } catch (err) {
-    console.error('MongoDB connection error:', err.message);
-    process.exit(1);
+  if (cached.conn) return cached.conn;
+
+  if (!cached.promise) {
+    cached.promise = mongoose
+      .connect(process.env.MONGODB_URI, {
+        bufferCommands: false,
+        serverSelectionTimeoutMS: 5000,
+      })
+      .then((mongoose) => mongoose);
   }
+
+  try {
+    cached.conn = await cached.promise;
+    console.log('MongoDB connected successfully');
+  } catch (e) {
+    cached.promise = null;
+    console.error('MongoDB connection error:', e.message);
+    throw e;
+  }
+
+  return cached.conn;
 };
-connectDB();
 
 // Middleware
 app.use(helmet());
@@ -61,8 +60,15 @@ app.use(
   }),
 );
 
-// Health check endpoint
-app.get('/health', (req, res) => res.status(200).json({ status: 'OK' }));
+// Health check endpoint with DB connection check
+app.get('/health', async (req, res) => {
+  try {
+    await connectDB();
+    res.status(200).json({ status: 'OK', db: 'Connected' });
+  } catch (err) {
+    res.status(500).json({ status: 'DOWN', db: 'Connection failed' });
+  }
+});
 
 // API Routes
 app.use('/api/v1/transactions', transactionRoutes);
@@ -83,94 +89,37 @@ app.use('*', (req, res) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
+  const statusCode = err.statusCode || 500;
+  const message =
+    process.env.NODE_ENV === 'production'
+      ? 'Something went wrong!'
+      : err.message;
 
-  // Log error stack in development
   if (process.env.NODE_ENV === 'development') {
     console.error('💥 ERROR 💥', err.stack);
   }
 
-  // Handle specific error types
-  let error = { ...err };
-  error.message = err.message;
-
-  // Mongoose validation error
-  if (err.name === 'ValidationError') {
-    error = handleValidationError(err);
-  }
-
-  // Mongoose duplicate key error
-  if (err.code === 11000) {
-    error = handleDuplicateFieldError(err);
-  }
-
-  // JWT errors
-  if (err.name === 'JsonWebTokenError') {
-    error = handleJWTError();
-  }
-  if (err.name === 'TokenExpiredError') {
-    error = handleJWTExpiredError();
-  }
-
-  // Multer file upload errors
-  if (err instanceof multer.MulterError) {
-    error = handleFileUploadError(err);
-  }
-
-  // Final error response
-  res.status(error.statusCode).json({
-    status: error.status,
-    message: error.message,
+  res.status(statusCode).json({
+    status: 'error',
+    message,
     ...(process.env.NODE_ENV === 'development' && {
-      stack: error.stack,
-      error: error,
+      stack: err.stack,
+      error: err,
     }),
   });
-});
-
-// Error handlers
-const handleValidationError = (err) => ({
-  statusCode: 400,
-  message: `Invalid input data: ${Object.values(err.errors)
-    .map((el) => el.message)
-    .join('. ')}`,
-});
-
-const handleDuplicateFieldError = (err) => ({
-  statusCode: 400,
-  message: `Duplicate field value: ${
-    Object.keys(err.keyValue)[0]
-  }. Please use another value!`,
-});
-
-const handleJWTError = () => ({
-  statusCode: 401,
-  message: 'Invalid token! Please log in again.',
-});
-
-const handleJWTExpiredError = () => ({
-  statusCode: 401,
-  message: 'Your token has expired! Please log in again.',
-});
-
-const handleFileUploadError = (err) => ({
-  statusCode: 400,
-  message:
-    err.code === 'LIMIT_FILE_SIZE'
-      ? 'File too large! Maximum size is 5MB.'
-      : 'File upload failed. Please try again.',
 });
 
 // Serverless configuration
 module.exports.handler = serverless(app);
 
-// Local server
-const PORT = process.env.PORT || 5000;
+// Local server configuration
 if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(
-      `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`,
-    );
+  const PORT = process.env.PORT || 5000;
+  connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(
+        `Server running in ${process.env.NODE_ENV} mode on port ${PORT}`,
+      );
+    });
   });
 }
